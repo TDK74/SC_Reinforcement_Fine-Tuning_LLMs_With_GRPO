@@ -12,10 +12,8 @@ from transformers import AutoTokenizer
 ## ------------------------------------------------------ ##
 _ = load_dotenv()
 
-client = OpenAI(
-                base_url = os.environ["PREDIBASE_MODEL_QWEN_URL"],
-                api_key = os.environ["PREDIBASE_API_KEY"],
-                )
+client = OpenAI(base_url = os.environ["PREDIBASE_MODEL_QWEN_URL"],
+                api_key = os.environ["PREDIBASE_API_KEY"], )
 
 ## ------------------------------------------------------ ##
 base_model_id = "Qwen/Qwen2.5-7B-Instruct"
@@ -64,8 +62,8 @@ class GuessWithFeedback:
     feedback: List[LetterFeedback]
 
     def __repr__(self) -> str:
-        feedback_str = " ".join(f"{letter}({fb.value})" for letter, fb in zip(self.guess,
-                                                                            self.feedback))
+        feedback_str = " ".join(f"{letter}({fb.value})"
+                                for letter, fb in zip(self.guess, self.feedback))
 
         return f"{self.guess} → Feedback: {feedback_str}"
 
@@ -77,41 +75,25 @@ def render_user_prompt(past_guesses: List[GuessWithFeedback]) -> str:
         prompt += "\n\nHere is some previous feedback:"
 
         for i, guess in enumerate(past_guesses):
-            prompt += f"\nGuess {i + 1}: {guess}"
+            prompt += f"\nGuess {i + 1} : {guess}"
 
     return prompt
 
 ## ------------------------------------------------------ ##
 def render_prompt(past_guesses: List[GuessWithFeedback]):
-    messages = [
-                {
-                "role" : "system",
-                "content" : SYSTEM_PROMPT
-                },
-                {
-                "role" : "user",
-                "content" : render_user_prompt(past_guesses)
-                },
-                {
-                "role" : "assistant",
-                "content" : "Let me solve this step by step.\n<think>"
-                }
-            ]
+    messages = [{"role" : "system", "content" : SYSTEM_PROMPT},
+                {"role" : "user", "content" : render_user_prompt(past_guesses)},
+                {"role" : "assistant", "content" : "Let me solve this step by step.\n<think>"}]
 
-    return tokenizer.apply_chat_template(
-                                        messages, tokenize = False,
-                                        continue_final_message = True
-                                        )
+    return tokenizer.apply_chat_template(messages, tokenize = False, continue_final_message = True)
 
 ## ------------------------------------------------------ ##
 def generate_stream(prompt: str, adapter_id: str = "") -> str:
-    response = client.completions.create(
-                                        model = adapter_id,
+    response = client.completions.create(model = adapter_id,
                                         prompt = prompt,
                                         temperature = 0.0,
                                         max_tokens = 2048,
-                                        stream = True,
-                                        )
+                                        stream = True, )
 
     completion = ""
 
@@ -128,24 +110,16 @@ def generate_stream(prompt: str, adapter_id: str = "") -> str:
 ## ------------------------------------------------------ ##
 secret_word = "CRAFT"
 
-past_guesses = [
-                GuessWithFeedback(
-                                "CRANE", [
-                                        LetterFeedback.CORRECT,
-                                        LetterFeedback.CORRECT,
-                                        LetterFeedback.CORRECT,
-                                        LetterFeedback.WRONG_LETTER,
-                                        LetterFeedback.WRONG_LETTER,
-                                ]),
-                GuessWithFeedback(
-                                "CRASH", [
-                                        LetterFeedback.CORRECT,
-                                        LetterFeedback.CORRECT,
-                                        LetterFeedback.CORRECT,
-                                        LetterFeedback.WRONG_LETTER,
-                                        LetterFeedback.WRONG_LETTER,
-                                ]),
-            ]
+past_guesses = [GuessWithFeedback("CRANE", [LetterFeedback.CORRECT,
+                                            LetterFeedback.CORRECT,
+                                            LetterFeedback.CORRECT,
+                                            LetterFeedback.WRONG_LETTER,
+                                            LetterFeedback.WRONG_LETTER, ]),
+                GuessWithFeedback("CRASH", [LetterFeedback.CORRECT,
+                                            LetterFeedback.CORRECT,
+                                            LetterFeedback.CORRECT,
+                                            LetterFeedback.WRONG_LETTER,
+                                            LetterFeedback.WRONG_LETTER, ]), ]
 
 prompt = render_prompt(past_guesses)
 print(prompt)
@@ -174,16 +148,10 @@ def get_feedback(guess: str, secret_word: str) -> List[LetterFeedback]:
     return feedback
 
 ## ------------------------------------------------------ ##
-def next_turn(
-            past_guesses: List[GuessWithFeedback],
-            secret_word: str,
-            adapter_id = ""
-            ):
+def next_turn(past_guesses: List[GuessWithFeedback], secret_word: str, adapter_id = ""):
     prompt = render_prompt(past_guesses)
     completion = generate_stream(prompt, adapter_id)
-    match = re.search(
-                    r"<guess>\s*(.*?)\s*</guess>", completion, re.DOTALL
-                    )
+    match = re.search(r"<guess>\s*(.*?)\s*</guess>", completion, re.DOTALL)
 
     if not match:
         raise RuntimeError("invalid guess")
