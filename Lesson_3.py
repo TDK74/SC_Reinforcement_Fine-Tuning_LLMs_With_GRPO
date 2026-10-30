@@ -12,8 +12,8 @@ from transformers import AutoTokenizer
 ## ------------------------------------------------------ ##
 _ = load_dotenv()
 
-client = OpenAI(base_url = os.environ["PREDIBASE_MODEL_QWEN_URL"],
-                api_key = os.environ["PREDIBASE_API_KEY"], )
+client = OpenAI(base_url= os.environ["PREDIBASE_MODEL_QWEN_URL"],
+                api_key= os.environ["PREDIBASE_API_KEY"], )
 
 ## ------------------------------------------------------ ##
 base_model_id = "Qwen/Qwen2.5-7B-Instruct"
@@ -62,8 +62,8 @@ class GuessWithFeedback:
     feedback: List[LetterFeedback]
 
     def __repr__(self) -> str:
-        feedback_str = " ".join(f"{letter}({fb.value})"
-                                for letter, fb in zip(self.guess, self.feedback))
+        pairs = zip(self.guess, self.feedback)
+        feedback_str = " ".join(f"{letter}({fb.value})" for letter, fb in pairs)
 
         return f"{self.guess} → Feedback: {feedback_str}"
 
@@ -85,22 +85,22 @@ def render_prompt(past_guesses: List[GuessWithFeedback]):
                 {"role" : "user", "content" : render_user_prompt(past_guesses)},
                 {"role" : "assistant", "content" : "Let me solve this step by step.\n<think>"}]
 
-    return tokenizer.apply_chat_template(messages, tokenize = False, continue_final_message = True)
+    return tokenizer.apply_chat_template(messages, tokenize= False, continue_final_message= True)
 
 ## ------------------------------------------------------ ##
-def generate_stream(prompt: str, adapter_id: str = "") -> str:
-    response = client.completions.create(model = adapter_id,
-                                        prompt = prompt,
-                                        temperature = 0.0,
-                                        max_tokens = 2048,
-                                        stream = True, )
+def generate_stream(prompt: str, adapter_id: str= "") -> str:
+    response = client.completions.create(model= adapter_id,
+                                        prompt= prompt,
+                                        temperature= 0.0,
+                                        max_tokens= 2048,
+                                        stream= True, )
 
     completion = ""
 
     for chunk in response:
         if chunk.choices[0].text is not None:
             content = chunk.choices[0].text
-            print(content, end = "", flush = True)
+            print(content, end= "", flush= True)
             completion += content
 
     print()
@@ -128,7 +128,7 @@ print(prompt)
 base_completion = generate_stream(prompt)
 
 ## ------------------------------------------------------ ##
-ft_completion = generate_stream(prompt, adapter_id = "wordle-dlai/2")
+ft_completion = generate_stream(prompt, adapter_id= "wordle-dlai/2")
 
 ## ------------------------------------------------------ ##
 def get_feedback(guess: str, secret_word: str) -> List[LetterFeedback]:
@@ -148,7 +148,7 @@ def get_feedback(guess: str, secret_word: str) -> List[LetterFeedback]:
     return feedback
 
 ## ------------------------------------------------------ ##
-def next_turn(past_guesses: List[GuessWithFeedback], secret_word: str, adapter_id = ""):
+def next_turn(past_guesses: List[GuessWithFeedback], secret_word: str, adapter_id= ""):
     prompt = render_prompt(past_guesses)
     completion = generate_stream(prompt, adapter_id)
     match = re.search(r"<guess>\s*(.*?)\s*</guess>", completion, re.DOTALL)
