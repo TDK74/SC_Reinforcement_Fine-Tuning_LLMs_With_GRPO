@@ -4,6 +4,7 @@ import torch
 
 from utils import *
 
+
 ## ------------------------------------------------------ ##
 warnings.filterwarnings("ignore")
 
@@ -24,12 +25,10 @@ def wordle_reward(guess: str, secret_word: str) -> int:
 ## ------------------------------------------------------ ##
 secret_word = "POUND"
 
-past_guesses = [
-                GuessWithFeedback.from_secret(guess = "CRANE", secret = secret_word),
-                GuessWithFeedback.from_secret(guess = "BLOND", secret = secret_word),
-                GuessWithFeedback.from_secret(guess = "FOUND", secret = secret_word),
-                ]
-past_guesses
+past_guesses = [GuessWithFeedback.from_secret(guess= "CRANE", secret= secret_word),
+                GuessWithFeedback.from_secret(guess= "BLOND", secret= secret_word),
+                GuessWithFeedback.from_secret(guess= "FOUND", secret= secret_word), ]
+print(past_guesses)
 
 ## ------------------------------------------------------ ##
 response = generate(get_messages(past_guesses))[0]
@@ -64,7 +63,7 @@ def render_guess_table(response, reward_fn):
 
 ## ------------------------------------------------------ ##
 print(f"Secret: {secret_word}")
-response = generate(get_messages(past_guesses), num_guesses = 8)
+response = generate(get_messages(past_guesses), num_guesses= 8)
 render_guess_table(response, wordle_reward)
 
 ## ------------------------------------------------------ ##
@@ -83,22 +82,21 @@ def wordle_reward_partial_credit(guess: str, secret_word: str) -> float:
             reward += 0.1
 
         else:
-            # no reward
             pass
 
     return reward
 
 ## ------------------------------------------------------ ##
 print(f"Secret: {secret_word}")
-response = generate(get_messages(past_guesses), num_guesses = 8, temperature = 0)
+response = generate(get_messages(past_guesses), num_guesses= 8, temperature= 0)
 render_guess_table(response, wordle_reward_partial_credit)
 
 ## ------------------------------------------------------ ##
 print(f"Secret: {secret_word}")
-response = generate(get_messages(past_guesses), num_guesses = 8, temperature = 1.3)
+response = generate(get_messages(past_guesses), num_guesses= 8, temperature= 1.3)
 render_guess_table(response, wordle_reward_partial_credit)
 
 ## ------------------------------------------------------ ##
 print(f"Secret: {secret_word}")
-response = generate(get_messages(past_guesses), num_guesses = 8, temperature = 0.7)
+response = generate(get_messages(past_guesses), num_guesses= 8, temperature= 0.7)
 render_guess_table(response, wordle_reward_partial_credit)
