@@ -14,10 +14,8 @@ load_dotenv("../.env")
 
 client = OpenAI(api_key = os.environ["OPENAI_API_KEY"])
 
-pb_client = OpenAI(
-                base_url = os.environ["PREDIBASE_MODEL_LLAMA_URL"],
-                api_key = os.environ["PREDIBASE_API_KEY"],
-                )
+pb_client = OpenAI(base_url = os.environ["PREDIBASE_MODEL_LLAMA_URL"],
+                    api_key = os.environ["PREDIBASE_API_KEY"], )
 
 ## ------------------------------------------------------ ##
 ds = load_dataset("mrSoul7766/ECTSum")
@@ -26,8 +24,8 @@ print(transcript[ : 1983])
 
 ## ------------------------------------------------------ ##
 SUMMARIZE_PROMPT = """
-                    Generate a concise summary of the information in the following earnings
-                    call transcript.
+                    Generate a concise summary of the information in the following earnings call
+                    transcript.
 
                     Only respond with the summary, do not include any extraneous text.
 
@@ -39,16 +37,12 @@ SUMMARIZE_PROMPT = """
 def summarize(transcript, n = 1):
     prompt = SUMMARIZE_PROMPT.format(transcript = transcript)
 
-    messages = [
-                {"role" : "user", "content" : prompt},
-                ]
+    messages = [{"role" : "user", "content" : prompt}, ]
 
-    return pb_client.chat.completions.create(
-                                            model = MODEL_NAME,
+    return pb_client.chat.completions.create(model = MODEL_NAME,
                                             messages = messages,
                                             n = n,
-                                            temperature = 0.9,
-                                            )
+                                            temperature = 0.9, )
 
 ## ------------------------------------------------------ ##
 resp = summarize(transcript)
@@ -57,13 +51,13 @@ print(summary)
 
 ## ------------------------------------------------------ ##
 JUDGE_PROMPT_V1 = """
-                    Rate the following summary of an earnings call transcript on a scale
-                    from 1 to 10.
+                    Rate the following summary of an earnings call transcript on a scale from 1
+                    to 10.
 
                     1 means the summary is very poor, 10 means the summary is very good.
 
-                    Provide reasoning followed by the final score at the end surrounded
-                    by <score> tags.
+                    Provide reasoning followed by the final score at the end surrounded by
+                    <score> tags.
 
                     For example:
 
@@ -78,27 +72,16 @@ JUDGE_PROMPT_V1 = """
                     {summary}
                     """
 
-def judge_reward_v1(
-                    transcript: str,
-                    summary: str,
-                    model: str = "gpt-4o-mini",
-                    verbose: bool = False,
-                    ) -> float:
-    prompt = JUDGE_PROMPT_V1.format(
-                                    transcript = transcript,
-                                    summary = summary,
-                                    )
+def judge_reward_v1(transcript: str, summary: str, model: str = "gpt-4o-mini",
+                    verbose: bool = False, ) -> float:
+    prompt = JUDGE_PROMPT_V1.format(transcript = transcript, summary = summary, )
 
-    messages = [
-                {"role" : "user", "content" : prompt},
-                ]
+    messages = [{"role" : "user", "content" : prompt}, ]
 
-    resp = client.chat.completions.create(
-                                        model = model,
+    resp = client.chat.completions.create(model = model,
                                         messages = messages,
                                         n = 1,
-                                        temperature = 0,
-                                        )
+                                        temperature = 0, )
 
     completion = resp.choices[0].message.content
 
@@ -133,8 +116,8 @@ scores
 
 ## ------------------------------------------------------ ##
 QUIZ_PROMPT = """
-                Generate a multiple-choice quiz based on the information in the following
-                earnings call transcript.
+                Generate a multiple-choice quiz based on the information in the following earnings
+                call transcript.
 
                 Example:
 
@@ -199,7 +182,7 @@ class Quiz(BaseModel):
         output = []
 
         for i, question in enumerate(self.questions, 1):
-            output.append(f"\nQuestion {i}:")
+            output.append(f"\nQuestion {i}: ")
             output.append(str(question))
 
         return "\n".join(output)
@@ -208,16 +191,12 @@ class Quiz(BaseModel):
 def create_quiz(transcript: str):
     prompt = QUIZ_PROMPT.format(transcript = transcript)
 
-    messages = [
-                {"role" : "user", "content" : prompt},
-                ]
+    messages = [{"role" : "user", "content" : prompt}, ]
 
-    resp = client.beta.chat.completions.parse(
-                                            model = "gpt-4o-mini",
+    resp = client.beta.chat.completions.parse(model = "gpt-4o-mini",
                                             messages = messages,
                                             temperature = 0.7,
-                                            response_format = Quiz,
-                                            )
+                                            response_format = Quiz, )
 
     quiz = resp.choices[0].message.parsed
     quiz.shuffle_all_questions()
@@ -247,8 +226,9 @@ TAKE_QUIZ_PROMPT = """
 
                     [A, D, C, B, B, C, D, A, A, B]
 
-                    You must provide an answer for all 10 questions.
-                    If you don't know the answer, answer with "0" for that question.
+                    You must provide an answer for all 10 questions. If you don't know the answer,
+                    answer with "0" for that question.
+
                     Example:
 
                     [A, D, 0, B, B, C, D, A, A, B]
@@ -270,11 +250,9 @@ def take_quiz(summary, quiz):
 
     prompt = TAKE_QUIZ_PROMPT.format(quiz = quiz_str, summary = summary)
 
-    resp = client.chat.completions.create(
-                                        model = "gpt-4o-mini",
-                                        messages = [{"role": "user", "content": prompt}],
-                                        temperature = 0,
-                                        )
+    resp = client.chat.completions.create(model = "gpt-4o-mini",
+                                        messages = [{"role" : "user", "content" : prompt}],
+                                        temperature = 0, )
 
     resp_str = resp.choices[0].message.content
 
