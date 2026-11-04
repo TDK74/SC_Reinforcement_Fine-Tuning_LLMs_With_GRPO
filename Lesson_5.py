@@ -12,10 +12,10 @@ from utils import *
 ## ------------------------------------------------------ ##
 load_dotenv("../.env")
 
-client = OpenAI(api_key = os.environ["OPENAI_API_KEY"])
+client = OpenAI(api_key= os.environ["OPENAI_API_KEY"])
 
-pb_client = OpenAI(base_url = os.environ["PREDIBASE_MODEL_LLAMA_URL"],
-                    api_key = os.environ["PREDIBASE_API_KEY"], )
+pb_client = OpenAI(base_url= os.environ["PREDIBASE_MODEL_LLAMA_URL"],
+                    api_key= os.environ["PREDIBASE_API_KEY"], )
 
 ## ------------------------------------------------------ ##
 ds = load_dataset("mrSoul7766/ECTSum")
@@ -35,14 +35,12 @@ SUMMARIZE_PROMPT = """
                     """
 
 def summarize(transcript, n = 1):
-    prompt = SUMMARIZE_PROMPT.format(transcript = transcript)
+    prompt = SUMMARIZE_PROMPT.format(transcript= transcript)
 
     messages = [{"role" : "user", "content" : prompt}, ]
 
-    return pb_client.chat.completions.create(model = MODEL_NAME,
-                                            messages = messages,
-                                            n = n,
-                                            temperature = 0.9, )
+    return pb_client.chat.completions.create(model= MODEL_NAME, messages= messages, n= n,
+                                            temperature= 0.9, )
 
 ## ------------------------------------------------------ ##
 resp = summarize(transcript)
@@ -72,16 +70,13 @@ JUDGE_PROMPT_V1 = """
                     {summary}
                     """
 
-def judge_reward_v1(transcript: str, summary: str, model: str = "gpt-4o-mini",
-                    verbose: bool = False, ) -> float:
-    prompt = JUDGE_PROMPT_V1.format(transcript = transcript, summary = summary, )
+def judge_reward_v1(transcript: str, summary: str, model: str= "gpt-4o-mini",
+                    verbose: bool= False, ) -> float:
+    prompt = JUDGE_PROMPT_V1.format(transcript= transcript, summary= summary, )
 
     messages = [{"role" : "user", "content" : prompt}, ]
 
-    resp = client.chat.completions.create(model = model,
-                                        messages = messages,
-                                        n = 1,
-                                        temperature = 0, )
+    resp = client.chat.completions.create(model= model, messages= messages, n= 1, temperature= 0, )
 
     completion = resp.choices[0].message.content
 
@@ -103,16 +98,16 @@ def judge_reward_v1(transcript: str, summary: str, model: str = "gpt-4o-mini",
     return score / 10
 
 ## ------------------------------------------------------ ##
-score = judge_reward_v1(transcript, summary, verbose = True)
+score = judge_reward_v1(transcript, summary, verbose= True)
 print(score)
 
 ## ------------------------------------------------------ ##
-resp = summarize(transcript, n = 8)
+resp = summarize(transcript, n= 8)
 summaries = [choice.message.content for choice in resp.choices]
 
 ## ------------------------------------------------------ ##
 scores = [judge_reward_v1(transcript, summary) for summary in summaries]
-scores
+print(scores)
 
 ## ------------------------------------------------------ ##
 QUIZ_PROMPT = """
@@ -189,14 +184,12 @@ class Quiz(BaseModel):
 
 
 def create_quiz(transcript: str):
-    prompt = QUIZ_PROMPT.format(transcript = transcript)
+    prompt = QUIZ_PROMPT.format(transcript= transcript)
 
     messages = [{"role" : "user", "content" : prompt}, ]
 
-    resp = client.beta.chat.completions.parse(model = "gpt-4o-mini",
-                                            messages = messages,
-                                            temperature = 0.7,
-                                            response_format = Quiz, )
+    resp = client.beta.chat.completions.parse(model= "gpt-4o-mini", messages= messages,
+                                                temperature= 0.7, response_format= Quiz, )
 
     quiz = resp.choices[0].message.parsed
     quiz.shuffle_all_questions()
@@ -248,11 +241,11 @@ def take_quiz(summary, quiz):
 
     quiz_str = "\n\n".join(question_strs)
 
-    prompt = TAKE_QUIZ_PROMPT.format(quiz = quiz_str, summary = summary)
+    prompt = TAKE_QUIZ_PROMPT.format(quiz= quiz_str, summary= summary)
 
-    resp = client.chat.completions.create(model = "gpt-4o-mini",
-                                        messages = [{"role" : "user", "content" : prompt}],
-                                        temperature = 0, )
+    resp = client.chat.completions.create(model= "gpt-4o-mini",
+                                        messages= [{"role" : "user", "content" : prompt}],
+                                        temperature= 0, )
 
     resp_str = resp.choices[0].message.content
 
@@ -262,7 +255,7 @@ def take_quiz(summary, quiz):
 
 ## ------------------------------------------------------ ##
 answers = take_quiz(summaries[0], quiz)
-answers
+print(answers)
 
 ## ------------------------------------------------------ ##
 def score_quiz_answers(answers, quiz):
@@ -289,7 +282,7 @@ def print_quiz_table(all_answers, rewards):
     elems = list(zip(range(length), rewards, advantages))
 
     headers = ["Index", "Reward", "Advantage"]
-    table = tabulate(elems, headers = headers, tablefmt = "grid").split("\n")
+    table = tabulate(elems, headers= headers, tablefmt= "grid").split("\n")
 
     for row in table:
         print(row)
