@@ -10,10 +10,10 @@ from utils import *
 ## ------------------------------------------------------ ##
 load_dotenv()
 
-client = OpenAI(api_key = os.environ["OPENAI_API_KEY"])
+client = OpenAI(api_key= os.environ["OPENAI_API_KEY"])
 
-pb_client = OpenAI(base_url = os.environ["PREDIBASE_MODEL_LLAMA_URL"],
-                    api_key = os.environ["PREDIBASE_API_KEY"], )
+pb_client = OpenAI(base_url= os.environ["PREDIBASE_MODEL_LLAMA_URL"],
+                    api_key= os.environ["PREDIBASE_API_KEY"], )
 
 ## ------------------------------------------------------ ##
 ds = load_dataset("mrSoul7766/ECTSum")
@@ -35,23 +35,23 @@ prompt = f"""
             {transcript}
             """
 
-completions = pb_client.chat.completions.create(model = MODEL_NAME,
+completions = pb_client.chat.completions.create(model= MODEL_NAME,
                                                 messages= [{"role" : "user", "content" : prompt}, ],
-                                                n = 8,
-                                                temperature = 0.9, )
+                                                n= 8,
+                                                temperature= 0.9, )
 
 ## ------------------------------------------------------ ##
 responses = [choice.message.content for choice in completions.choices]
 quiz_rewards = [quiz_reward(resp, quiz) for resp in responses]
-quiz_rewards
+print(quiz_rewards)
 
 ## ------------------------------------------------------ ##
 transcript_score = quiz_reward(transcript, quiz)
-transcript_score
+print(transcript_score)
 
 ## ------------------------------------------------------ ##
 lengths = [len(resp) for resp in responses]
-lengths
+print(lengths)
 
 ## ------------------------------------------------------ ##
 len(transcript)
@@ -69,7 +69,7 @@ def length_penalty_reward(response: str) -> float:
 
 ## ------------------------------------------------------ ##
 transcript_reward = length_penalty_reward(transcript)
-transcript_reward
+print(transcript_reward)
 
 ## ------------------------------------------------------ ##
 lengths = [len(resp) for resp in responses]
@@ -89,19 +89,19 @@ advantages = compute_advantages(total_rewards)
 min_adv = min(advantages)
 max_adv = max(advantages)
 
-plt.figure(figsize = (10, 6), facecolor = 'black')
+plt.figure(figsize= (10, 6), facecolor= 'black')
 plt.style.use('dark_background')
 scatter = plt.scatter(length_rewards,
                         quiz_rewards,
-                        c = advantages,
-                        cmap = 'RdYlGn',
-                        s = 100,
-                        edgecolor = 'white',
-                        vmin = min_adv,
-                        vmax = max_adv)
-plt.colorbar(scatter, label = 'Advantage')
+                        c= advantages,
+                        cmap= 'RdYlGn',
+                        s= 100,
+                        edgecolor= 'white',
+                        vmin= min_adv,
+                        vmax= max_adv)
+plt.colorbar(scatter, label= 'Advantage')
 plt.xlabel('Length Reward')
 plt.ylabel('Quiz Reward')
 plt.title('Length Reward vs Quiz Reward (colored by advantage)')
-plt.grid(True, alpha = 0.2)
+plt.grid(True, alpha= 0.2)
 plt.show()
